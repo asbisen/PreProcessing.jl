@@ -10,6 +10,8 @@ This library intends to implement the following transformers
 * [ ] Normalizer
 * [ ] OneHotEncoder
 
+TODO:
+* [ ] Generalize to handle 1D arrays
 
 ```
 julia> using PreProcessing
