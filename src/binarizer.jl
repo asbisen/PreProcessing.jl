@@ -47,39 +47,39 @@ julia> xnew = transform(clf, x)
 ```
 """
 immutable Binarizer{T<:Number}
-  threshold::T
-  n_features::Integer
-  obsdim::Integer
+    threshold::T
+    n_features::Integer
+    obsdim::Integer
 end
 
 function Binarizer{T<:Number}(X::AbstractMatrix{T}; threshold::T=0, obsdim=1)
-  feature_dim = _other_dimension(obsdim)
-  n_features = size(X, feature_dim)
-  Binarizer(threshold, n_features, obsdim)
+    feature_dim = _other_dimension(obsdim)
+    n_features = size(X, feature_dim)
+    Binarizer(threshold, n_features, obsdim)
 end
 
 function fit{T<:Number}(::Type{Binarizer}, X::AbstractMatrix{T}; threshold=0, obsdim::Integer=1)
-  Binarizer(X; threshold=threshold, obsdim=obsdim)
+    Binarizer(X; threshold=threshold, obsdim=obsdim)
 end
 
 function transform{T<:Number}(cs::Binarizer, X::AbstractMatrix{T})
-  Xnew = convert(AbstractMatrix{Int64}, copy(X))
-  transform!(cs, Xnew)
+    Xnew = convert(AbstractMatrix{Int64}, copy(X))
+    transform!(cs, Xnew)
 end
 
 function transform!{T<:Number}(cs::Binarizer, X::AbstractMatrix{T})
-  # if obsdim == 1 then feature_dim == 2 and vice-versa
-  feature_dim = _other_dimension(cs.obsdim)
-  obsdim = cs.obsdim
+    # if obsdim == 1 then feature_dim == 2 and vice-versa
+    feature_dim = _other_dimension(cs.obsdim)
+    obsdim = cs.obsdim
 
-  for i in 1:size(X, obsdim)
-    for j in 1:size(X, feature_dim)
-      if obsdim == 1
-        X[i,j] = (X[i,j] <= cs.threshold) ? 0 : 1
-      elseif obsdim == 2
-        X[j,i] = (X[j,i] <= cs.threshold) ? 0 : 1
-      end
+    for i in 1:size(X, obsdim)
+        for j in 1:size(X, feature_dim)
+            if obsdim == 1
+                X[i,j] = (X[i,j] <= cs.threshold) ? 0 : 1
+            elseif obsdim == 2
+                X[j,i] = (X[j,i] <= cs.threshold) ? 0 : 1
+            end
+        end
     end
-  end
-  X
+    X
 end

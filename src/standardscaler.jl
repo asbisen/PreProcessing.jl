@@ -1,24 +1,5 @@
 
-# ----------------------------------------------------------------------------------------------------------------
-# Description:
-#
-#
-# TODO:
-#   - [ ] Finish documenting the code
-#   - [ ] Check the correctness of code
-#   - [x] Add inverse_transform() function to get to the original matrix
-#   - [ ] Investigate the need for a inplace transform!()
-# ----------------------------------------------------------------------------------------------------------------
-#
-# function _handle_zeros_in_scale!{T<:AbstractFloat}(σ::Vector{T})
-#   zero_idx = find(x->x==0, σ)
-#   σ[zero_idx] = 1.0
-#   σ
-# end
-#
-# _other_dimension(obsdim) = mod(obsdim,2)+1
-#
-# ----------------------------------------------------------------------------------------------------------------
+
 """
 `fit(StandardScaler; corrected=false, obsdim::Integer=1)`
 
@@ -67,98 +48,98 @@ julia> inverse_transform(clf, xnew)
 ```
 """
 immutable StandardScaler{T<:Number}
-  μ::Vector{T}
-  σ::Vector{T}
-  n_features::Integer
-  obsdim::Integer
+    μ::Vector{T}
+    σ::Vector{T}
+    n_features::Integer
+    obsdim::Integer
 end
 
 function StandardScaler{T<:Number}(X::AbstractMatrix{T}; corrected=false, obsdim::Integer=1)
-  feature_dim = _other_dimension(obsdim)
-  n_features = size(X, feature_dim)
+    feature_dim = _other_dimension(obsdim)
+    n_features = size(X, feature_dim)
 
-  n_features = size(X, feature_dim)
-  μ = mean(X, obsdim) |> vec
-  σ = std(X, obsdim, corrected = corrected) |> vec
-  _handle_zeros_in_scale!(σ)
+    n_features = size(X, feature_dim)
+    μ = mean(X, obsdim) |> vec
+    σ = std(X, obsdim, corrected = corrected) |> vec
+    _handle_zeros_in_scale!(σ)
 
-  StandardScaler(μ, σ, n_features, obsdim)
+    StandardScaler(μ, σ, n_features, obsdim)
 end
 
 
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
 function fit{T<:Number}(::Type{StandardScaler}, X::AbstractMatrix{T}; corrected=false, obsdim::Integer=1)
-  StandardScaler(X; corrected=corrected, obsdim=obsdim)
+    StandardScaler(X; corrected=corrected, obsdim=obsdim)
 end
 
 
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
 function transform{T<:Number}(cs::StandardScaler, X::AbstractMatrix{T})
-  Xnew = copy(convert(Array{Float64}, X))
-  transform!(cs, Xnew)
+    Xnew = copy(convert(Array{Float64}, X))
+    transform!(cs, Xnew)
 end
 
 
 function transform!{T<:Float64}(cs::StandardScaler, X::Array{T})
-  # if obsdim == 1 then feature_dim == 2 and vice-versa
-  feature_dim = _other_dimension(cs.obsdim)
-  obsdim = cs.obsdim
+    # if obsdim == 1 then feature_dim == 2 and vice-versa
+    feature_dim = _other_dimension(cs.obsdim)
+    obsdim = cs.obsdim
 
-  for i in 1:size(X, obsdim)
-    for j in 1:size(X, feature_dim)
-      if obsdim == 1
-        X[i,j] = (X[i,j] - cs.μ[j]) / cs.σ[j]
-      elseif obsdim == 2
-        X[j,i] = (X[j,i] - cs.μ[j]) / cs.σ[j]
-      end
+    for i in 1:size(X, obsdim)
+        for j in 1:size(X, feature_dim)
+            if obsdim == 1
+                X[i,j] = (X[i,j] - cs.μ[j]) / cs.σ[j]
+            elseif obsdim == 2
+                X[j,i] = (X[j,i] - cs.μ[j]) / cs.σ[j]
+            end
+        end
     end
-  end
-  X
+    X
 end
 
 # ----------------------------------------------------------------------------------------------------------------
 
 function inverse_transform{T<:Number}(cs::StandardScaler, X::AbstractMatrix{T})
-  feature_dim = _other_dimension(cs.obsdim)
-  obsdim = cs.obsdim
+    feature_dim = _other_dimension(cs.obsdim)
+    obsdim = cs.obsdim
 
-  if obsdim == 1
-    Xnew = (X .* cs.σ' ) .+ cs.μ'
-  elseif obsdim == 2
-    Xnew = (X .* cs.σ) .+ cs.μ
-  else
-    error("obsdim should be 1 or 2")
-  end
-  Xnew
+    if obsdim == 1
+        Xnew = (X .* cs.σ' ) .+ cs.μ'
+    elseif obsdim == 2
+        Xnew = (X .* cs.σ) .+ cs.μ
+    else
+        error("obsdim should be 1 or 2")
+    end
+    Xnew
 end
 
 # ----------------------------------------------------------------------------------------------------------------
 
 function test_StandardScaler(n_obs=10, n_features=6)
 
-  @testset "Transform <-> Inverse Transform" begin
-    # Floating Point
-    X = rand(n_obs,n_features)
-    clf = fit(StandardScaler, X)
-    X_transformed = transform(clf, X)
-    X_inversed = inverse_transform(clf, X_transformed)
-    @test round.(X,2) == round.(X_inversed, 2)
+    @testset "Transform <-> Inverse Transform" begin
+        # Floating Point
+        X = rand(n_obs,n_features)
+        clf = fit(StandardScaler, X)
+        X_transformed = transform(clf, X)
+        X_inversed = inverse_transform(clf, X_transformed)
+        @test round.(X,2) == round.(X_inversed, 2)
 
-    # Integer
-    X = rand(-10:10, n_obs,n_features)
-    clf = fit(StandardScaler, X)
-    X_transformed = transform(clf, X)
-    X_inversed = inverse_transform(clf, X_transformed)
-    @test X == Int64.(round.(X_inversed))
+        # Integer
+        X = rand(-10:10, n_obs,n_features)
+        clf = fit(StandardScaler, X)
+        X_transformed = transform(clf, X)
+        X_inversed = inverse_transform(clf, X_transformed)
+        @test X == Int64.(round.(X_inversed))
 
-    # Integer with obsdim=2
-    X = rand(-10:10, n_obs,n_features)
-    clf = fit(StandardScaler, X, obsdim=2)
-    X_transformed = transform(clf, X)
-    X_inversed = inverse_transform(clf, X_transformed)
-    @test X == Int64.(round.(X_inversed))
-  end
+        # Integer with obsdim=2
+        X = rand(-10:10, n_obs,n_features)
+        clf = fit(StandardScaler, X, obsdim=2)
+        X_transformed = transform(clf, X)
+        X_inversed = inverse_transform(clf, X_transformed)
+        @test X == Int64.(round.(X_inversed))
+    end
 
 end # test_StandardScaler()
